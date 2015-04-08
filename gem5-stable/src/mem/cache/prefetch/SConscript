@@ -35,4 +35,4 @@ SimObject('Prefetcher.py')
 Source('base.cc')
 Source('stride.cc')
 Source('tagged.cc')
-
+Source('global.cc')
