@@ -68,7 +68,7 @@ class GlobalHistoryBuffer : public BasePrefetcher
 	TableEntry* listPointer;
     };
 
-    class IndexTable
+    class IndexTableEntry
     {
       public:
         Addr key;
@@ -76,7 +76,7 @@ class GlobalHistoryBuffer : public BasePrefetcher
     };
 
     std::list<TableEntry*> table[Max_Contexts];
-    std::list<IndexTable*> indexTab[Max_Contexts];
+    std::list<IndexTableEntry*> indexTable[Max_Contexts];
 
     TableEntry* head[Max_Contents];
     bool instTagged;
