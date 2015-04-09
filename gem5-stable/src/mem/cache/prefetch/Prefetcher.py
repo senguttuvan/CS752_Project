@@ -79,8 +79,14 @@ class TaggedPrefetcher(BasePrefetcher):
     cxx_class = 'TaggedPrefetcher'
     cxx_header = "mem/cache/prefetch/tagged.hh"
 
-class GlobalHistoryPrefetcher(BasePrefetcher):
-    type = 'GlobalHistoryPrefetcher'
-    cxx_class = 'GlobalHistoryPrefetcher'
+class GlobalHistoryBuffer(BasePrefetcher):
+    type = 'GlobalHistoryBuffer'
+    cxx_class = 'GlobalHistoryBuffer'
     cxx_header = "mem/cache/prefetch/global.hh"
+
+class GlobalStridePrefetcher(GlobalHistoryBuffer):
+    type = 'GlobalStridePrefetcher'
+    cxx_class = 'GlobalStridePrefetcher'
+    cxx_header = "mem/cache/prefetch/ghb_stride.hh"
+
 

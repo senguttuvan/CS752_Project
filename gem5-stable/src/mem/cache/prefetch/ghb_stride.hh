@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 UW-Madison
+ * Copyright (c) 2015-2016 
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -43,56 +43,31 @@
 
 /**
  * @file
- * Describes a Global history buffer based prefetcher.
+ * Describes a strided prefetcher.
  */
 
-#ifndef __MEM_CACHE_PREFETCH_GLOBAL_BUFFER_HH__
-#define __MEM_CACHE_PREFETCH_GLOBAL_BUFFER_HH__
+#ifndef __MEM_CACHE_PREFETCH_GHB_STRIDE_PREFETCHER_HH__
+#define __MEM_CACHE_PREFETCH_GHB_STRIDE_PREFETCHER_HH__
 
 #include <climits>
 
-#include "mem/cache/prefetch/base.hh"
-#include "params/GlobalHistoryBuffer.hh"
+#include "mem/cache/prefetch/global.hh"
+#include "params/GlobalStridePrefetcher.hh"
 
-class GlobalHistoryBuffer : public BasePrefetcher
+class GlobalStridePrefetcher : public GlobalHistoryBuffer
 {
-  protected:
-
-    static const int Max_Contexts = 64;
-
-    class TableEntry
-    {
-      public:
-        Addr missAddr;
-        bool isSecure;
-	TableEntry* listPointer;
-    };
-
-    class IndexTable
-    {
-      public:
-        Addr key;
-        TableEntry* historyBufferEntry;
-    };
-
-    std::list<TableEntry*> table[Max_Contexts];
-    std::list<IndexTable*> indexTab[Max_Contexts];
-
-    TableEntry* head[Max_Contents];
-    bool instTagged;
 
   public:
 
-    GlobalHistoryBuffer(const Params *p)
-        : BasePrefetcher(p), instTagged(p->inst_tagged)
+    GlobalStridePrefetcher(const Params *p)
+        : GlobalHistoryBuffer(p), instTagged(p->inst_tagged)
     {
     }
 
-    ~GlobalHistoryBuffer() {}
-    
-    virtual void calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
-                           std::list<Cycles> &delays);
+    ~GlobalStridePrefetcher() {}
 
+    void calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
+                           std::list<Cycles> &delays);
 };
 
-#endif // __MEM_CACHE_PREFETCH_GLOBAL_BUFFER_HH__
+#endif // __MEM_CACHE_PREFETCH_GHB_STRIDE_PREFETCHER_HH__
