@@ -63,7 +63,9 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     bool is_secure = pkt->isSecure();
     MasterID master_id = useMasterId ? pkt->req->masterId() : 0;
     Addr pc = pkt->req->getPC();
+
     assert(master_id < Max_Contexts);
+    std::list<IndexTableEntry*> &indexTab = indexTable[master_id];
     std::list<TableEntry*> &tab = table[master_id];
 
     // Revert to simple N-block ahead prefetch for instruction fetches
@@ -75,7 +77,8 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
                 pfSpanPage += degree - d + 1;
                 return;
             }
-            DPRINTF(HWPrefetch, "queuing prefetch to %x @ %d\n",
+            DPRINTF(HWPrefetch, "GLOBAL HISTORY BUFFER::Stride:: 
+	            queuing prefetch to %x @ %d\n",
                     new_addr, latency);
             addresses.push_back(new_addr);
             delays.push_back(latency);
@@ -84,20 +87,35 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     }
 
     /* Scan Table for instAddr Match */
-    std::list<TableEntry*>::iterator iter;
-    for (iter = tab.begin(); iter != tab.end(); iter++) {
+    std::list<IndexTableEntry*>::iterator iter;
+    for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
         // Entries have to match on the security state as well
-        if ((*iter)->instAddr == pc && (*iter)->isSecure == is_secure)
+        if ((*iter)->key == pc)
             break;
     }
 
-    if (iter != tab.end()) {
+    if (iter != indexTab.end()) {
         // Hit in table
 
-        int new_stride = data_addr - (*iter)->missAddr;
-        bool stride_match = (new_stride == (*iter)->stride);
+	TableEntry* TabEntry = (*iter)->historyBufferEntry;
+	(*iter)->key = head[master_id];
+	
+	//NOTE::::: Check the use of isSecure !!! 
+	//NOTE::::: Initialize head to tab.begin() - where to ?
+	head[master_id]->missAddr = data_addr;
+	head[master_id]->listPointer = TabEntry;
+	
+	if (tab.size() >= 256) { //set default indexTable size is 256
+	     head[master_id] = tab.begin();
+	} else {
+	     head[master_id]++;
+	}
 
-        if (stride_match && new_stride != 0) {
+        int new_stride = data_addr - TabEntry->missAddr;
+	int old_stride = TabEntry->missAddr - ((TabEntry->listPointer)->missAddr);
+	bool stride_match = (new_stride == old_stride);
+
+/*        if (stride_match && new_stride != 0) {
             (*iter)->tolerance = true;
             if ((*iter)->confidence < Max_Conf)
                 (*iter)->confidence++;
@@ -110,16 +128,16 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
                 (*iter)->tolerance = false;
             }
         }
-
+*/
         DPRINTF(HWPrefetch, "hit: PC %x data_addr %x (%s) stride %d (%s), "
                 "conf %d\n", pc, data_addr, is_secure ? "s" : "ns", new_stride,
                 stride_match ? "match" : "change",
                 (*iter)->confidence);
 
-        (*iter)->missAddr = data_addr;
+//        (*iter)->missAddr = data_addr;
         (*iter)->isSecure = is_secure;
 
-        if ((*iter)->confidence <= 0)
+        if (!stride_match)
             return;
 
         for (int d = 1; d <= degree; d++) {
@@ -142,21 +160,21 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
         DPRINTF(HWPrefetch, "miss: PC %x data_addr %x (%s)\n", pc, data_addr,
                 is_secure ? "s" : "ns");
 
-        if (tab.size() >= 256) { //set default table size is 256
-            std::list<TableEntry*>::iterator min_pos = tab.begin();
-            int min_conf = (*min_pos)->confidence;
-            for (iter = min_pos, ++iter; iter != tab.end(); ++iter) {
+        if (indexTab.size() >= 128){ //set default indexTable size is 256
+            std::list<IndexTableEntry*>::iterator min_pos = indexTab.begin();
+/*          int min_conf = (*min_pos)->confidence;
+            for (iter = min_pos, ++iter; iter != indexTab.end(); ++iter) {
                 if ((*iter)->confidence < min_conf){
                     min_pos = iter;
                     min_conf = (*iter)->confidence;
                 }
             }
-            DPRINTF(HWPrefetch, "  replacing PC %x (%s)\n",
-                    (*min_pos)->instAddr, (*min_pos)->isSecure ? "s" : "ns");
+*/          DPRINTF(HWPrefetch, "  replacing PC %x (%s)\n",
+                    (*min_pos)->key,(*min_pos)->isSecure ? "s" : "ns");
 
             // free entry and delete it
             delete *min_pos;
-            tab.erase(min_pos);
+            indexTab.erase(min_pos);
         }
 
         TableEntry *new_entry = new TableEntry;
@@ -164,9 +182,8 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
         new_entry->missAddr = data_addr;
         new_entry->isSecure = is_secure;
         new_entry->stride = 0;
-        new_entry->confidence = 0;
-        new_entry->tolerance = false;
-        tab.push_back(new_entry);
+
+        indexTab.push_back(new_entry);
     }
 }
 
