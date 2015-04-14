@@ -60,7 +60,7 @@ class GlobalStridePrefetcher : public GlobalHistoryBuffer
   public:
 
     GlobalStridePrefetcher(const Params *p)
-        : GlobalHistoryBuffer(p), instTagged(p->inst_tagged)
+        : GlobalHistoryBuffer(p)
     {
     }
 
