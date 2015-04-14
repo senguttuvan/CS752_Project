@@ -78,7 +78,7 @@ class GlobalHistoryBuffer : public BasePrefetcher
     std::list<TableEntry*> table[Max_Contexts];
     std::list<IndexTableEntry*> indexTable[Max_Contexts];
 
-    TableEntry* head[Max_Contents];
+    TableEntry* head[Max_Contexts];
     bool instTagged;
 
   public:

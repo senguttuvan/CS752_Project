@@ -78,9 +78,7 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
                 pfSpanPage += degree - d + 1;
                 return;
             }
-            DPRINTF(HWPrefetch, "GLOBAL HISTORY BUFFER::Stride:: 
-	            queuing prefetch to %x @ %d\n",
-                    new_addr, latency);
+            DPRINTF(HWPrefetch, "GLOBAL HISTORY BUFFER::Stride::queuing prefetch to %x @ %d\n",new_addr, latency);
             addresses.push_back(new_addr);
             delays.push_back(latency);
         }
@@ -89,8 +87,9 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
     /* Scan Table for instAddr Match */
     std::list<IndexTableEntry*>::iterator iter;
-    std::list<TableEntry*>::iterator GHBiter;
-    std::list<TableEntry*>::iterator GHB_Pre_iter;
+    //std::list<TableEntry*>::iterator GHBiter;
+    //std::list<TableEntry*>::iterator GHB_Pre_iter;
+    TableEntry* GHBpointer;
 
     for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
         // Entries have to match on the security state as well
@@ -102,12 +101,14 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
         // Hit in table
 
 	TableEntry* TabEntry = (*iter)->historyBufferEntry;
-	// Traverse the link list to find all possible prefetch address
-	for (GHBiter= (TabEntry->listPointer); (GHBiter != NULL) && (GHBiter - &GHBtab.back() <=256 ) ; (*GHBiter)->listPointer)
+	// Traverse the link list to find all possible prefetch address    && (GHBpointer - &GHBtab.back() <=256 )
+//	for (GHBpointer= (TabEntry->listPointer); (GHBpointer != NULL) ; GHBpointer->listPointer)
+        for (int i=0; i<=1; i++) 
         {
-             GHB_Pre_iter = GHBiter + 1;
+             //GHB_Pre_iter = GHBiter + 1;
+             GHBpointer= (TabEntry)
              Addr new_address = (*GHB_Pre_iter)->missAddr;
-             addresses.push_back(new_addr);
+             addresses.push_back(new_address);
              delays.push_back(latency);
 
         } 
@@ -125,27 +126,34 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
                 
 	// Update index table to point to the new GHB entry
-	(*iter)->historyBufferEntry = &GHBtab.back();
+	(*iter)->historyBufferEntry = GHBtab.back();
 
      } else {
         // Miss in table
 	//Check if any of the listpointers in the Index table is invalid
         for (iter = indexTab.begin(); iter != indexTab.end(); iter ++ )
         {
-		if ((*iter)->historyBufferEntry - &GHBiter.back() >= GHBSIZE  )
+		if ((*iter)->historyBufferEntry - GHBtab.back() >= GHBSIZE  )
 		{
 		    //Value is invalid
 		    indexTab.erase(iter);
 		    return;
 		}
 	}
-        if(iter ! = indexTab.end())
+	// Insert missed addr value into the GHB
+	TableEntry* new_entry = new TableEntry;
+        new_entry->missAddr = data_addr;
+        new_entry->isSecure = is_secure;
+        new_entry->listPointer = NULL;
+
+        GHBtab.push_back(new_entry);
+
+        if(iter != indexTab.end())
         {
  		//Insert into the index table
-        	IndexTableEntry *new_entry = new TableEntry;
-        	new_entry->missAddr = data_addr;
-        	new_entry->isSecure = is_secure;
-        	new_entry->stride = 0;
+        	IndexTableEntry *new_entry = new IndexTableEntry;
+        	new_entry->key = data_addr;
+        	new_entry->historyBufferEntry = GHBtab.back() ;
                 indexTab.push_back(new_entry);
     	}
 	else // if it is the end and no invalid values wer found should decide which to replace
@@ -155,8 +163,8 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 }
 
 
-GlobalStridePrefetcher*
-GlobalStridePrefetcherParams::create()
+GlobalMarkovPrefetcher*
+GlobalMarkovPrefetcherParams::create()
 {
-   return new GlobalStridePrefetcher(this);
+   return new GlobalMarkovPrefetcher(this);
 }

@@ -56,11 +56,10 @@
 
 class GlobalMarkovPrefetcher : public GlobalHistoryBuffer
 {
-
   public:
 
     GlobalMarkovPrefetcher(const Params *p)
-        : GlobalMarkovBuffer(p), instTagged(p->inst_tagged)
+        : GlobalHistoryBuffer(p)
     {
     }
 

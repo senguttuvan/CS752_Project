@@ -89,4 +89,8 @@ class GlobalStridePrefetcher(GlobalHistoryBuffer):
     cxx_class = 'GlobalStridePrefetcher'
     cxx_header = "mem/cache/prefetch/ghb_stride.hh"
 
+class GlobalMarkovPrefetcher(GlobalHistoryBuffer):
+    type = 'GlobalMarkovPrefetcher'
+    cxx_class = 'GlobalMarkovPrefetcher'
+    cxx_header = "mem/cache/prefetch/ghb_markov.hh"
 
