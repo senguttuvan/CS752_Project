@@ -75,8 +75,8 @@ class GlobalHistoryBuffer : public BasePrefetcher
         TableEntry* historyBufferEntry;
     };
 
-    std::list<TableEntry*> table[Max_Contexts];
-    std::list<IndexTableEntry*> indexTable[Max_Contexts];
+    std::vector<TableEntry*> table[Max_Contexts];
+    std::vector<IndexTableEntry*> indexTable[Max_Contexts];
 
     TableEntry* head[Max_Contexts];
     bool instTagged;
@@ -89,10 +89,9 @@ class GlobalHistoryBuffer : public BasePrefetcher
     }
 
     ~GlobalHistoryBuffer() {}
-    
-    virtual void calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
+    void calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
                            std::list<Cycles> &delays);
-
+ 
 };
 
 #endif // __MEM_CACHE_PREFETCH_GLOBAL_BUFFER_HH__

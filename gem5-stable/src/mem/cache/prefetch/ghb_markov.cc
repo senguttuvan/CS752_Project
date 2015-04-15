@@ -63,11 +63,11 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     Addr data_addr = pkt->getAddr();
     bool is_secure = pkt->isSecure();
     MasterID master_id = useMasterId ? pkt->req->masterId() : 0;
-    Addr pc = pkt->req->getPC();
+    //Addr pc = pkt->req->getPC();
 
     assert(master_id < Max_Contexts);
-    std::list<IndexTableEntry*> &indexTab = indexTable[master_id];
-    std::list<TableEntry*> &GHBtab = table[master_id];
+    std::vector<IndexTableEntry*> &indexTab = indexTable[master_id];
+    std::vector<TableEntry*> GHBtab = table[master_id];
 
     // Revert to simple N-block ahead prefetch for instruction fetches
     if (instTagged && pkt->req->isInstFetch()) {
@@ -86,10 +86,9 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     }
 
     /* Scan Table for instAddr Match */
-    std::list<IndexTableEntry*>::iterator iter;
-    //std::list<TableEntry*>::iterator GHBiter;
-    //std::list<TableEntry*>::iterator GHB_Pre_iter;
+    std::vector<IndexTableEntry*>::iterator iter;
     TableEntry* GHBpointer;
+    TableEntry* GHB_Pre_iter;
 
     for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
         // Entries have to match on the security state as well
@@ -101,21 +100,21 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
         // Hit in table
 
 	TableEntry* TabEntry = (*iter)->historyBufferEntry;
-	// Traverse the link list to find all possible prefetch address    && (GHBpointer - &GHBtab.back() <=256 )
-//	for (GHBpointer= (TabEntry->listPointer); (GHBpointer != NULL) ; GHBpointer->listPointer)
-        for (int i=0; i<=1; i++) 
+	// Traverse the link list to find all possible prefetch address    
+	GHBpointer =TabEntry->listPointer;
+        for (int i=0; i<=1 && (GHBpointer - (GHBtab.back()) <= GHBSIZE) ; i++) 
         {
-             //GHB_Pre_iter = GHBiter + 1;
-             GHBpointer= (TabEntry)
-             Addr new_address = (*GHB_Pre_iter)->missAddr;
+	     
+             GHB_Pre_iter = GHBpointer + 1;
+             Addr new_address = GHB_Pre_iter->missAddr;
              addresses.push_back(new_address);
              delays.push_back(latency);
-
+	     GHBpointer= GHBpointer->listPointer;
         } 
 	// update GHB with the latest miss addr
         if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
         {
- 	      GHBtab.pop_front();	
+ 	      GHBtab.erase(GHBtab.begin());	
         }
         TableEntry* new_entry = new TableEntry;
         new_entry->missAddr = data_addr;
