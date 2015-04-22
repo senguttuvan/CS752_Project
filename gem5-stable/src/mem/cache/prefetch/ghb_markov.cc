@@ -50,6 +50,7 @@
 #include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/ghb_markov.hh"
 #define GHBSIZE 256
+#define INDEX_TABLE_SIZE 64
 
 void
 GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
@@ -98,11 +99,14 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
     if (iter != indexTab.end()) {
         // Hit in table
+
+	if ((*iter)->confidence < Max_Conf ) {
+		(*iter)->confidence++;
+	}
 	
-	(*iter)->confidence++;
 	TableEntry* TabEntry = (*iter)->historyBufferEntry;
 	// Traverse the link list to find all possible prefetch address    
-/*	GHBpointer =TabEntry->listPointer;
+	GHBpointer =TabEntry->listPointer;
         for (int i=0; i<=1 && ((GHBtab.back()) - GHBpointer <= GHBSIZE) ; i++) 
         {
 	     
@@ -112,7 +116,7 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
              delays.push_back(latency);
 	     GHBpointer= GHBpointer->listPointer;
         } 
-*/	// update GHB with the latest miss addr
+	// update GHB with the latest miss addr
         if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
         {
  	      GHBtab.erase(GHBtab.begin());	

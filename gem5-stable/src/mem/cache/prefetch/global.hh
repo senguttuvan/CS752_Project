@@ -86,14 +86,15 @@ class GlobalHistoryBuffer : public BasePrefetcher
 
   public:
 
-    GlobalHistoryBuffer(const Params *p)
+    GlobalHistoryBuffer(const GlobalHistoryBufferParams *p)
         : BasePrefetcher(p), instTagged(p->inst_tagged)
     {
     }
 
-    ~GlobalHistoryBuffer() {}
-    void calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
-                           std::list<Cycles> &delays);
+
+
+    virtual void calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
+                           std::list<Cycles> &delays) {};
  
 };
 

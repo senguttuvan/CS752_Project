@@ -59,7 +59,7 @@ class GlobalStridePrefetcher : public GlobalHistoryBuffer
 
   public:
 
-    GlobalStridePrefetcher(const Params *p)
+    GlobalStridePrefetcher(const GlobalStridePrefetcherParams *p)
         : GlobalHistoryBuffer(p)
     {
     }

@@ -52,9 +52,9 @@
 #include "mem/cache/prefetch/global.hh"
 
 
-/*GlobalHistoryBuffer*
+GlobalHistoryBuffer*
 GlobalHistoryBufferParams::create()
 {
    return new GlobalHistoryBuffer(this);
 }
-*/
+

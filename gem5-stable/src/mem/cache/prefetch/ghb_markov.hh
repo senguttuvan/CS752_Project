@@ -58,7 +58,7 @@ class GlobalMarkovPrefetcher : public GlobalHistoryBuffer
 {
   public:
 
-    GlobalMarkovPrefetcher(const Params *p)
+    GlobalMarkovPrefetcher(const GlobalMarkovPrefetcherParams *p)
         : GlobalHistoryBuffer(p)
     {
     }
