@@ -79,7 +79,7 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
                 pfSpanPage += degree - d + 1;
                 return;
             }
-            DPRINTF(HWPrefetch, "GLOBAL HISTORY BUFFER::Stride::queuing prefetch to %x @ %d\n",new_addr, latency);
+            DPRINTF(HWPrefetch, "GLOBAL HISTORY BUFFER::Markov::queuing prefetch to %x @ %d\n",new_addr, latency);
             addresses.push_back(new_addr);
             delays.push_back(latency);
         }
