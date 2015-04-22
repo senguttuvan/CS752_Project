@@ -60,6 +60,8 @@ class GlobalHistoryBuffer : public BasePrefetcher
 
     static const int Max_Contexts = 64;
 
+    static const int Max_Conf = INT_MAX;
+
     class TableEntry
     {
       public:
@@ -73,6 +75,7 @@ class GlobalHistoryBuffer : public BasePrefetcher
       public:
         Addr key;
         TableEntry* historyBufferEntry;
+	int confidence;
     };
 
     std::vector<TableEntry*> table[Max_Contexts];

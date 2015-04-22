@@ -46,13 +46,15 @@
  * Global History Buffer based Prefetcher template instantiations.
  */
 
+
 #include "base/trace.hh"
 #include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/global.hh"
 
 
-GlobalHistoryBuffer*
+/*GlobalHistoryBuffer*
 GlobalHistoryBufferParams::create()
 {
    return new GlobalHistoryBuffer(this);
 }
+*/

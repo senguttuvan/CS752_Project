@@ -98,11 +98,12 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
     if (iter != indexTab.end()) {
         // Hit in table
-
+	
+	(*iter)->confidence++;
 	TableEntry* TabEntry = (*iter)->historyBufferEntry;
 	// Traverse the link list to find all possible prefetch address    
-	GHBpointer =TabEntry->listPointer;
-        for (int i=0; i<=1 && (GHBpointer - (GHBtab.back()) <= GHBSIZE) ; i++) 
+/*	GHBpointer =TabEntry->listPointer;
+        for (int i=0; i<=1 && ((GHBtab.back()) - GHBpointer <= GHBSIZE) ; i++) 
         {
 	     
              GHB_Pre_iter = GHBpointer + 1;
@@ -111,7 +112,7 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
              delays.push_back(latency);
 	     GHBpointer= GHBpointer->listPointer;
         } 
-	// update GHB with the latest miss addr
+*/	// update GHB with the latest miss addr
         if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
         {
  	      GHBtab.erase(GHBtab.begin());	
@@ -129,36 +130,75 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
      } else {
         // Miss in table
-	//Check if any of the listpointers in the Index table is invalid
-        for (iter = indexTab.begin(); iter != indexTab.end(); iter ++ )
-        {
-		if ((*iter)->historyBufferEntry - GHBtab.back() >= GHBSIZE  )
-		{
-		    //Value is invalid
-		    indexTab.erase(iter);
-		    return;
-		}
-	}
+
+
 	// Insert missed addr value into the GHB
+
+	// Check for the size overflow in GHB
+        if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
+        {
+ 	      GHBtab.erase(GHBtab.begin());	
+        }
 	TableEntry* new_entry = new TableEntry;
         new_entry->missAddr = data_addr;
         new_entry->isSecure = is_secure;
         new_entry->listPointer = NULL;
-
+	
         GHBtab.push_back(new_entry);
 
-        if(iter != indexTab.end())
-        {
- 		//Insert into the index table
-        	IndexTableEntry *new_entry = new IndexTableEntry;
-        	new_entry->key = data_addr;
-        	new_entry->historyBufferEntry = GHBtab.back() ;
-                indexTab.push_back(new_entry);
-    	}
-	else // if it is the end and no invalid values wer found should decide which to replace
-	{ 
-        }
-      }
+	// Insert a corresponding index table entry
+	if (indexTab.size() == INDEX_TABLE_SIZE){
+		//Check if any of the listpointers in the Index table is invalid
+
+	      bool invalidFound = false;
+	
+	      for (iter = indexTab.begin(); iter != indexTab.end(); iter ++ )
+        	{
+			if ( GHBtab.back() - (*iter)->historyBufferEntry >= GHBSIZE  )
+			{
+			    //Value is invalid
+			    indexTab.erase(iter);
+			    invalidFound = true;
+			    break;
+			}
+		}
+	
+        	if(invalidFound)
+        	{
+ 			//Insert into the index table
+        		IndexTableEntry *new_entry = new IndexTableEntry;
+        		new_entry->key = data_addr;
+			new_entry->confidence = 0;
+        		new_entry->historyBufferEntry = GHBtab.back() ;
+        	        indexTab.push_back(new_entry);
+    		}
+		else // if it is the end and no invalid values wer found should decide which to replace
+		{
+        	// Check for confidence if no entry is invalid
+		
+			int lowest_confidence = Max_Conf;
+			std::vector<IndexTableEntry*>::iterator lru_iter;
+	
+        		for (iter = indexTab.begin(); iter != indexTab.end(); iter ++ )
+        		{
+				if ( (*iter)->confidence < lowest_confidence )
+				{
+					// If confidence less than lowest confidence, save the index table entry
+					lru_iter = iter;
+					lowest_confidence = (*iter)->confidence;
+				}
+			}
+ 			indexTab.erase(lru_iter);
+
+			IndexTableEntry *new_entry = new IndexTableEntry;
+        		new_entry->key = data_addr;
+			new_entry->confidence = 0;
+        		new_entry->historyBufferEntry = GHBtab.back() ;
+        	        indexTab.push_back(new_entry);
+		}
+	}
+
+      } 
 }
 
 
