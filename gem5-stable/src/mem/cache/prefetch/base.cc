@@ -65,6 +65,7 @@ BasePrefetcher::BasePrefetcher(const Params *p)
       onPrefetch(p->on_prefetch), system(p->sys),
       masterId(system->getMasterId(name()))
 {
+	DPRINTF(HWPrefetch, "Indide the base prefetcher :) \n");
 }
 
 void

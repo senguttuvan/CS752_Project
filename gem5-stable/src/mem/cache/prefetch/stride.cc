@@ -54,7 +54,10 @@ void
 StridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
                                     std::list<Cycles> &delays)
 {
-    if (!pkt->req->hasPC()) {
+
+    DPRINTF(HWPrefetch, " Bazinga ! ! ! ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ;) ");
+
+	if (!pkt->req->hasPC()) {
         DPRINTF(HWPrefetch, "ignoring request with no PC");
         return;
     }

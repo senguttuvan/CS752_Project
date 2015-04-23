@@ -75,6 +75,10 @@ def config_cache(options, system):
                                       width = 32)
         system.l2.cpu_side = system.tol2bus.master
         system.l2.mem_side = system.membus.slave
+	system.l2.prefetch_on_access = 'true'
+	system.l2.prefetcher = StridePrefetcher(degree=8,latency=1) 
+	system.l2.prefetcher.on_read_only = 'true'
+	system.l2.prefetcher.on_prefetch = 'false'
 
     for i in xrange(options.num_cpus):
         if options.caches:

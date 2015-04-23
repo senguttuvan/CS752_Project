@@ -53,6 +53,8 @@
 #include "mem/cache/prefetch/base.hh"
 #include "params/StridePrefetcher.hh"
 
+using namespace std;
+
 class StridePrefetcher : public BasePrefetcher
 {
   protected:
@@ -84,6 +86,9 @@ class StridePrefetcher : public BasePrefetcher
     StridePrefetcher(const Params *p)
         : BasePrefetcher(p), instTagged(p->inst_tagged)
     {
+    	
+     cout<< "Stride prefetcher :)))))))))))))))))))))))))))))))))))))))))))))))))))))))))";
+
     }
 
     ~StridePrefetcher() {}
