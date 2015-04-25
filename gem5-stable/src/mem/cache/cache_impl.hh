@@ -152,7 +152,7 @@ Cache<TagStore>::satisfyCpuSideRequest(PacketPtr pkt, BlkType *blk,
                                        bool pending_downgrade)
 {
     assert(pkt->isRequest());
-
+    DPRINTF(Cache, "In cache imple 1");
     assert(blk && blk->isValid());
     // Occasionally this is not true... if we are a lower-level cache
     // satisfying a string of Read and ReadEx requests from
@@ -252,6 +252,7 @@ void
 Cache<TagStore>::markInService(MSHR *mshr, PacketPtr pkt)
 {
     // packet can be either a request or response
+DPRINTF(Cache, "In cache imple 2");
 
     markInServiceInternal(mshr, pkt);
 #if 0
@@ -303,6 +304,7 @@ Cache<TagStore>::access(PacketPtr pkt, BlkType *&blk,
 {
     // sanity check
     assert(pkt->isRequest());
+DPRINTF(Cache, "In cache imple access ssss 3");
 
     DPRINTF(Cache, "%s for %s address %x size %d\n", __func__,
             pkt->cmdString(), pkt->getAddr(), pkt->getSize());
@@ -412,6 +414,7 @@ Cache<TagStore>::recvTimingSnoopResp(PacketPtr pkt)
     Tick time = clockEdge(hitLatency);
 
     assert(pkt->isResponse());
+DPRINTF(Cache, "In cache imple timing snoop resp 4");
 
     // must be cache-to-cache response from upper to lower level
     ForwardResponseRecord *rec =
@@ -453,6 +456,8 @@ template<class TagStore>
 bool
 Cache<TagStore>::recvTimingReq(PacketPtr pkt)
 {
+	DPRINTF(Cache, "In cache imple recv timin req 5");
+
     DPRINTF(CacheTags, "%s tags: %s\n", __func__, tags->print());
 //@todo Add back in MemDebug Calls
 //    MemDebug::cacheAccess(pkt);
@@ -538,6 +543,7 @@ Cache<TagStore>::recvTimingReq(PacketPtr pkt)
     PacketList writebacks;
 
     bool satisfied = access(pkt, blk, lat, writebacks);
+DPRINTF(Cache, "After checking if satisfied %b",satisfied);
 
     // track time of availability of next prefetch, if any
     Tick next_pf_time = 0;
