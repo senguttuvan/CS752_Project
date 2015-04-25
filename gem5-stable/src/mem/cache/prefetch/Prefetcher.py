@@ -74,6 +74,11 @@ class StridePrefetcher(BasePrefetcher):
     cxx_class = 'StridePrefetcher'
     cxx_header = "mem/cache/prefetch/stride.hh"
 
+class MarkovPrefetcher(BasePrefetcher):
+    type = 'MarkovPrefetcher'
+    cxx_class = 'MarkovPrefetcher'
+    cxx_header = "mem/cache/prefetch/markov.hh"
+
 class TaggedPrefetcher(BasePrefetcher):
     type = 'TaggedPrefetcher'
     cxx_class = 'TaggedPrefetcher'
