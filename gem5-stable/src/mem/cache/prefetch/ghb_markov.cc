@@ -64,11 +64,15 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     Addr data_addr = pkt->getAddr();
     bool is_secure = pkt->isSecure();
     MasterID master_id = useMasterId ? pkt->req->masterId() : 0;
-    //Addr pc = pkt->req->getPC();
+    Addr pc = pkt->req->getPC();
 
     assert(master_id < Max_Contexts);
     std::vector<IndexTableEntry*> &indexTab = indexTable[master_id];
-    std::vector<TableEntry*> GHBtab = table[master_id];
+    std::vector<TableEntry*> &GHBtab = table[master_id];
+
+    DPRINTF(HWPrefetch, "PC: %x Data Add: %p ghb size: %d ,index tab size : %d ,master id %d \n",pc,data_addr, GHBtab.size(),indexTab.size(), master_id );
+
+
 
     // Revert to simple N-block ahead prefetch for instruction fetches
     if (instTagged && pkt->req->isInstFetch()) {
@@ -99,23 +103,35 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
     if (iter != indexTab.end()) {
         // Hit in table
+	DPRINTF(HWPrefetch, "Hit in the index table\n");
 
 	if ((*iter)->confidence < Max_Conf ) {
 		(*iter)->confidence++;
 	}
 	
 	TableEntry* TabEntry = (*iter)->historyBufferEntry;
+	TableEntry* Tab_Pre_iter = TabEntry + 1;
 	// Traverse the link list to find all possible prefetch address    
 	GHBpointer =TabEntry->listPointer;
-        for (int i=0; i<=1 && ((GHBtab.back()) - GHBpointer <= GHBSIZE) ; i++) 
-        {
-	     
-             GHB_Pre_iter = GHBpointer + 1;
+
+	if (Tab_Pre_iter != NULL) {
+	Addr new_address =  Tab_Pre_iter->missAddr;
+	addresses.push_back(new_address);
+	delays.push_back(latency);
+	}
+
+	if (GHBpointer != NULL) {
+          if ((GHBtab.back()) - GHBpointer <= GHBSIZE) 
+           {
+	     GHB_Pre_iter = GHBpointer + 1;
              Addr new_address = GHB_Pre_iter->missAddr;
+             DPRINTF(HWPrefetch, "GHBPointer %p. GHB pre iter : %p , GHB miss addr :%p New miss:%p \n",GHBpointer,GHB_Pre_iter , GHBpointer->missAddr, new_address );
+
              addresses.push_back(new_address);
              delays.push_back(latency);
-	     GHBpointer= GHBpointer->listPointer;
-        } 
+	     GHBpointer = GHBpointer->listPointer;
+	     
+          } 
 	// update GHB with the latest miss addr
         if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
         {
@@ -128,28 +144,51 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
         GHBtab.push_back(new_entry);
 
-                
+  DPRINTF(HWPrefetch, "After addin in hit PC: %x Data Add: %p ghb size: %d \n",pc,data_addr, GHBtab.size() );              
 	// Update index table to point to the new GHB entry
 	(*iter)->historyBufferEntry = GHBtab.back();
+
+	} else {
+	 		DPRINTF(HWPrefetch, "In the else part\n");
+		if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
+      		  {
+ 	    		  GHBtab.erase(GHBtab.begin());	
+      		  }
+
+                TableEntry* new_entry = new TableEntry;
+        	new_entry->missAddr = data_addr;
+        	new_entry->isSecure = is_secure;
+        	new_entry->listPointer = (*iter)->historyBufferEntry;
+
+        	GHBtab.push_back(new_entry);
+		(*iter)->historyBufferEntry = GHBtab.back();
+		DPRINTF(HWPrefetch, "Inserted value in GHb : %p\n",new_entry->missAddr);
+
+	
+	}
 
      } else {
         // Miss in table
 
+	DPRINTF(HWPrefetch, "Miss in the index table\n");
 
 	// Insert missed addr value into the GHB
 
 	// Check for the size overflow in GHB
         if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
         {
+	DPRINTF(HWPrefetch, "GHB size full in miss\n");
+	
  	      GHBtab.erase(GHBtab.begin());	
         }
 	TableEntry* new_entry = new TableEntry;
         new_entry->missAddr = data_addr;
         new_entry->isSecure = is_secure;
         new_entry->listPointer = NULL;
+	DPRINTF(HWPrefetch, "After entering value in GHB : miss add: %x\n",new_entry->missAddr);
 	
         GHBtab.push_back(new_entry);
-
+DPRINTF(HWPrefetch, "After addin in miss PC: %x Data Add: %p ghb size: %d \n",pc,data_addr, GHBtab.size() );
 	// Insert a corresponding index table entry
 	if (indexTab.size() == INDEX_TABLE_SIZE){
 		//Check if any of the listpointers in the Index table is invalid
@@ -159,7 +198,9 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 	      for (iter = indexTab.begin(); iter != indexTab.end(); iter ++ )
         	{
 			if ( GHBtab.back() - (*iter)->historyBufferEntry >= GHBSIZE  )
-			{
+			 {
+			    DPRINTF(HWPrefetch, "Invalid ghb entry : GHBtab.back %x, (*iter)->hist %x\n",GHBtab.back(), (*iter)->historyBufferEntry);
+
 			    //Value is invalid
 			    indexTab.erase(iter);
 			    invalidFound = true;
@@ -175,6 +216,8 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 			new_entry->confidence = 0;
         		new_entry->historyBufferEntry = GHBtab.back() ;
         	        indexTab.push_back(new_entry);
+	DPRINTF(HWPrefetch, "Insert in index when full: %x\n",new_entry->key);
+
     		}
 		else // if it is the end and no invalid values wer found should decide which to replace
 		{
@@ -192,6 +235,8 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 					lowest_confidence = (*iter)->confidence;
 				}
 			}
+	DPRINTF(HWPrefetch, "Insert in index after evivting a block: miss addr: %x\n",(*lru_iter)->key);
+
  			indexTab.erase(lru_iter);
 
 			IndexTableEntry *new_entry = new IndexTableEntry;
@@ -200,6 +245,15 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
         		new_entry->historyBufferEntry = GHBtab.back() ;
         	        indexTab.push_back(new_entry);
 		}
+	} else {
+
+		IndexTableEntry *new_entry = new IndexTableEntry;
+        	new_entry->key = data_addr;
+		new_entry->confidence = 0;
+        	new_entry->historyBufferEntry = GHBtab.back() ;
+                indexTab.push_back(new_entry);
+		DPRINTF(HWPrefetch, "Insert in index when index table not full %x\n",new_entry->key);
+
 	}
 
       } 
