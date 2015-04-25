@@ -80,3 +80,7 @@ class PageTableWalkerCache(BaseCache):
     size = '1kB'
     tgts_per_mshr = 12
     is_top_level = True
+
+class L2Prefetcher(BasePrefetcher):
+    type = 'GlobalStridePrefetcher'
+    degree = 3

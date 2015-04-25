@@ -62,6 +62,8 @@ SimpleTimingPort::recvFunctional(PacketPtr pkt)
 bool
 SimpleTimingPort::recvTimingReq(PacketPtr pkt)
 {
+
+    	
     /// @todo temporary hack to deal with memory corruption issue until
     /// 4-phase transactions are complete. Remove me later
     for (int x = 0; x < pendingDelete.size(); x++)

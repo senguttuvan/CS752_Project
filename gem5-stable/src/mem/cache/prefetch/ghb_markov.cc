@@ -92,8 +92,9 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
     /* Scan Table for instAddr Match */
     std::vector<IndexTableEntry*>::iterator iter;
+    std::vector<TableEntry*>::iterator tabIter;
     TableEntry* GHBpointer;
-    TableEntry* GHB_Pre_iter;
+    std::vector<TableEntry*>::iterator GHB_Pre_iter;
 
     for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
         // Entries have to match on the security state as well
@@ -110,12 +111,25 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 	}
 	
 	TableEntry* TabEntry = (*iter)->historyBufferEntry;
-	TableEntry* Tab_Pre_iter = TabEntry + 1;
-	// Traverse the link list to find all possible prefetch address    
-	GHBpointer =TabEntry->listPointer;
 
-	if (Tab_Pre_iter != NULL) {
-	Addr new_address =  Tab_Pre_iter->missAddr;
+	for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
+        // Get the corresponding itertor (this is needed to get the next element in the vector)
+          if ( (*tabIter) == TabEntry){
+		break;
+    	  }
+   }
+
+	std::vector<TableEntry*>::iterator  tab_Pre_iter = tabIter+1;
+	// Traverse the link list to find all possible prefetch address    
+	GHBpointer = (*tabIter)->listPointer;
+	//std::vector<TableEntry*>::iterator *tableIter = TabEntry;
+	//DPRINTF(HWPrefetch, "iterator + 1: %p", tableIter+1);
+
+	if (*tab_Pre_iter != NULL) {
+
+	 DPRINTF(HWPrefetch, "TabEntry %p. Tab pre iter : %p , Tab miss addr :%p prefetch miss:%p \n",TabEntry, (*tab_Pre_iter) , TabEntry->missAddr, (*tab_Pre_iter)->missAddr );
+
+	Addr new_address =  (*tab_Pre_iter)->missAddr;
 	addresses.push_back(new_address);
 	delays.push_back(latency);
 	}
@@ -123,13 +137,20 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 	if (GHBpointer != NULL) {
           if ((GHBtab.back()) - GHBpointer <= GHBSIZE) 
            {
-	     GHB_Pre_iter = GHBpointer + 1;
-             Addr new_address = GHB_Pre_iter->missAddr;
-             DPRINTF(HWPrefetch, "GHBPointer %p. GHB pre iter : %p , GHB miss addr :%p New miss:%p \n",GHBpointer,GHB_Pre_iter , GHBpointer->missAddr, new_address );
+    	     for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
+             // Get the corresponding itertor (this is needed to get the next element in the vector)
+              if ( (*tabIter) == GHBpointer){
+		break;
+    	      }  
+             }
+
+	     GHB_Pre_iter = tabIter + 1;
+             Addr new_address = (*GHB_Pre_iter)->missAddr;
+             DPRINTF(HWPrefetch, "GHBPointer %p. GHB pre iter : %p , GHB miss addr :%p New miss:%p \n",GHBpointer, (*GHB_Pre_iter) , GHBpointer->missAddr, new_address );
 
              addresses.push_back(new_address);
              delays.push_back(latency);
-	     GHBpointer = GHBpointer->listPointer;
+//	     GHBpointer = GHBpointer->listPointer;
 	     
           } 
 	// update GHB with the latest miss addr
@@ -185,9 +206,10 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
         new_entry->missAddr = data_addr;
         new_entry->isSecure = is_secure;
         new_entry->listPointer = NULL;
-	DPRINTF(HWPrefetch, "After entering value in GHB : miss add: %x\n",new_entry->missAddr);
+//	DPRINTF(HWPrefetch, "After entering value in GHB : miss add: %x entry addr(back) : %p  \n",new_entry->missAddr,	GHBtab.back() );
 	
         GHBtab.push_back(new_entry);
+//	DPRINTF(HWPrefetch, "Bacck pointer after insert : %p", GHBtab.back());
 DPRINTF(HWPrefetch, "After addin in miss PC: %x Data Add: %p ghb size: %d \n",pc,data_addr, GHBtab.size() );
 	// Insert a corresponding index table entry
 	if (indexTab.size() == INDEX_TABLE_SIZE){
