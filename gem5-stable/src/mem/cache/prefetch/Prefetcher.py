@@ -99,3 +99,8 @@ class GlobalMarkovPrefetcher(GlobalHistoryBuffer):
     cxx_class = 'GlobalMarkovPrefetcher'
     cxx_header = "mem/cache/prefetch/ghb_markov.hh"
 
+class GlobalDeltaPrefetcher(GlobalHistoryBuffer):
+    type = 'GlobalDeltaPrefetcher'
+    cxx_class = 'GlobalDeltaPrefetcher'
+    cxx_header = "mem/cache/prefetch/ghb_delta.hh"
+
