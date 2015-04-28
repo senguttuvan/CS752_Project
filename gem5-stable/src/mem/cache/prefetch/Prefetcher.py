@@ -89,6 +89,11 @@ class TaggedPrefetcher(BasePrefetcher):
     cxx_class = 'TaggedPrefetcher'
     cxx_header = "mem/cache/prefetch/tagged.hh"
 
+class DeltaPrefetcher(BasePrefetcher):
+    type = 'DeltaPrefetcher'
+    cxx_class = 'DeltaPrefetcher'
+    cxx_header = "mem/cache/prefetch/delta.hh"
+
 class GlobalHistoryBuffer(BasePrefetcher):
     type = 'GlobalHistoryBuffer'
     cxx_class = 'GlobalHistoryBuffer'
