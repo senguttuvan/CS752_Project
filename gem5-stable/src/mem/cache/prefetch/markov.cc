@@ -69,11 +69,21 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 	
      // Print Table
     std::list<MarkovEntry*>::iterator print_iter;
-    DPRINTF(HWPrefetch,"Miss add          Pre1        Pre2   \n");
-    for (print_iter = tab.begin(); print_iter != tab.end(); print_iter++) {
-         DPRINTF(HWPrefetch, "%x \t %x \t %x\n",(*print_iter)->missAddr,(*print_iter)->Pre_miss1, (*print_iter)->Pre_miss2);
+    std::vector<Addr>::iterator print_vec;
 
-    }
+    DPRINTF(HWPrefetch,"Previous Miss Address %x \n",  Previous_missaddr );
+
+    DPRINTF(HWPrefetch,"\n\n\n:::::::::::::: Table for Miss Address %x ::::::::::::::::::::::: \n",data_addr);
+    for (print_iter = tab.begin(); print_iter != tab.end(); print_iter++) {
+	DPRINTF(HWPrefetch,"\n Markov table - miss Addr %x\t",(*print_iter)->missAddr);
+	for (print_vec=(*print_iter)->Pre_miss.begin();print_vec != (*print_iter)->Pre_miss.end(); print_vec++)
+         { std::cout<<std::hex<<(*print_vec)<<"\t "; 
+         }
+	}
+    DPRINTF(HWPrefetch,"\n\n\nEnd of Table ::::::::::::::::::::::: \n");
+
+
+
     // Revert to simple N-block ahead prefetch for instruction fetches
     if (instTagged && pkt->req->isInstFetch()) {
         for (int d = 1; d <= degree; d++) {
@@ -83,7 +93,7 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
                 pfSpanPage += degree - d + 1;
                 return;
             }
-            DPRINTF(HWPrefetch, "queuing prefetch to %x @ %d\n",new_addr, latency);
+            DPRINTF(HWPrefetch, "Inst tag queuing prefetch to %x @ %d\n",new_addr, latency);
             addresses.push_back(new_addr);
             delays.push_back(latency);
         }
@@ -92,6 +102,8 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 
     /* Scan Table for instAddr Match */
     std::list<MarkovEntry*>::iterator iter;
+    std::vector<Addr>::iterator vec_iter;
+    std::list<MarkovEntry*>::iterator pf_width;
     for (iter = tab.begin(); iter != tab.end(); iter++) {
         // Entries have to match on the security state as well
         if ((*iter)->missAddr == data_addr && (*iter)->isSecure == is_secure)
@@ -100,22 +112,60 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 
     if (iter != tab.end()) {
         // Hit in table
-
+	DPRINTF(HWPrefetch,"Hit in the table for miss add %x\n",(*iter)->missAddr);
         if ((*iter)->confidence < Max_Conf)
         {        (*iter)->confidence++;
         }
- 	Addr prefetch1 = (*iter)-> Pre_miss1;
-	Addr prefetch2 = (*iter)-> Pre_miss2;
-	if (prefetch1 != 0){
- 		addresses.push_back(prefetch1);
-        	delays.push_back(latency);
-	}
-	if(prefetch2 != 0){
- 		addresses.push_back(prefetch2);
-       		delays.push_back(latency);
+  	int deg=0;	
+        for(vec_iter = (*iter)->Pre_miss.begin();vec_iter !=  (*iter)->Pre_miss.end();vec_iter++)
+	{
+		Addr new_addr = *vec_iter;
+		//if (pageStop && !samePage(data_addr, new_addr)) {
+                	// Spanned the page, so now stop
+              	//        pfSpanPage += degree - deg + 1;
+               	//	return;
+          	//} else {
+			DPRINTF(HWPrefetch,"Prefetched addr in depth D=%d is %x\n",deg,new_addr);
+			addresses.push_back(new_addr);
+			delays.push_back(latency);
+		//}
+		deg =deg+1;
+		
+		//Prefetch width
+		for (int degr =0 ; degr< degree-1; degr++){
+			for(pf_width = tab.begin();pf_width != tab.end();pf_width++ ){
+				if ((*pf_width)->missAddr == new_addr && (*pf_width)->isSecure == is_secure)
+          				  break;
+			}
+			if(pf_width != tab.end()){
+				if(!(*pf_width)->Pre_miss.empty()) {
+					new_addr = (*pf_width)->Pre_miss.back();
+				/*	if (pageStop && !samePage(data_addr, new_addr)) {
+                				// Spanned the page, so now stop
+						
+              	    		    		pfSpanPage += degree - degr + 1;
+               					return;
+          				} else { */ // COMMENTED FOR DEBUG
+						DPRINTF(HWPrefetch,"Prefetched addr in width D=%d is %x\n",degr,new_addr);
+						addresses.push_back(new_addr);
+						delays.push_back(latency);
+					//}  // COMMENTED FOR DEBUG
+
+				}
+				else {
+					break;
+				}
+			}
+			else {
+				break;
+			}
+
+		}
+			
 	}
 
-        DPRINTF(HWPrefetch, "hit: PC %x data_addr %x (%s) Prefetch 1 %x , Prefetch 2 %x, Confidence %d\n", pc, data_addr, is_secure ? "s" : "ns",  prefetch1, prefetch2, (*iter)->confidence);
+        	
+        DPRINTF(HWPrefetch, "hit: PC %x data_addr %x (%s) , Confidence %d\n", pc, data_addr, is_secure ? "s" : "ns",  (*iter)->confidence);
 
     } else {
         // Miss in table
@@ -143,10 +193,9 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
         new_entry->missAddr = data_addr;
         new_entry->isSecure = is_secure;
         new_entry->confidence = 0;
-	new_entry->Pre_miss1 = 0;
-	new_entry->Pre_miss2 = 0;
         tab.push_back(new_entry);
     }
+
     //Update the history information of the previous miss address 
     if(Previous_missaddr != 0)
     {
@@ -155,18 +204,25 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
            if ((*iter)->missAddr == Previous_missaddr && (*iter)->isSecure == is_secure)
                 break;
         }
-	if((*iter)->Pre_miss1 != data_addr && (*iter)->Pre_miss2 != data_addr ){
-		if((*iter)->Pre_miss1 == 0) {
-			(*iter)->Pre_miss1 = data_addr;
+	if(iter != tab.end()) {
+		
+		for(vec_iter = (*iter)->Pre_miss.begin();vec_iter !=  (*iter)->Pre_miss.end();vec_iter++ )
+		{
+			if (data_addr == *vec_iter) {
+				DPRINTF(HWPrefetch,"Value already exists in table %x",data_addr);
+				break;
+			}
 		}
-		else if((*iter)->Pre_miss2 == 0 ){
-			(*iter)->Pre_miss2 = data_addr;	
-        	}
-		else {
-			(*iter)->Pre_miss1 = (*iter)->Pre_miss2;
-	   		(*iter)->Pre_miss2 = data_addr;
-        	}
-	} 
+		if(vec_iter != (*iter)->Pre_miss.end())
+		{	DPRINTF(HWPrefetch,"Erasing that duplicate value %x",data_addr);
+			(*iter)->Pre_miss.erase(vec_iter);
+		}
+		if ((*iter)->Pre_miss.size() >= degree) {
+			DPRINTF(HWPrefetch,"Size more than degree so erasing the first value %x",data_addr);
+			(*iter)->Pre_miss.erase((*iter)->Pre_miss.begin());
+		} 
+		(*iter)->Pre_miss.push_back(data_addr);	
+	}
     }
     Previous_missaddr = data_addr;	
 

@@ -137,7 +137,7 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
               				  pfSpanPage += degree - d + 1;
                				  return;
           			} else {
-					DPRINTF(HWPrefetch,"Prefetched addr in I=%d D=%d is %x",i,d,new_address);
+					DPRINTF(HWPrefetch,"Prefetched addr in I=%d D=%d is %x\n",i,d,new_address);
 					addresses.push_back(new_address);
 					delays.push_back(latency);
 				}	

@@ -72,10 +72,9 @@ class MarkovPrefetcher : public BasePrefetcher
         
         Addr missAddr;
         bool isSecure;
-        Addr Pre_miss1;
-	Addr Pre_miss2;
 	int confidence;
         bool tolerance;
+        std::vector <Addr> Pre_miss;
     };
 
     std::list<MarkovEntry*> table[Max_Contexts];
