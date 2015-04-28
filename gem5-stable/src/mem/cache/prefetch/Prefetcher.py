@@ -79,6 +79,11 @@ class MarkovPrefetcher(BasePrefetcher):
     cxx_class = 'MarkovPrefetcher'
     cxx_header = "mem/cache/prefetch/markov.hh"
 
+class DeltaPrefetcher(BasePrefetcher):
+    type = 'DeltaPrefetcher'
+    cxx_class = 'DeltaPrefetcher'
+    cxx_header = "mem/cache/prefetch/delta.hh"
+
 class TaggedPrefetcher(BasePrefetcher):
     type = 'TaggedPrefetcher'
     cxx_class = 'TaggedPrefetcher'
