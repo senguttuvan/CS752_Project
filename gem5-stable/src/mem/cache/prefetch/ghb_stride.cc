@@ -73,6 +73,11 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     DPRINTF(HWPrefetch, "PC: %x Data Add: %p ghb size: %d ,index tab size : %d ,master id %d \n",pc,data_addr, GHBtab.size(),indexTab.size(), master_id );
 
 
+     //Print index table
+     DPRINTF(HWPrefetch,"============Index table====================");
+     for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
+	DPRINTF(HWPrefetch,"");
+     }
     // Revert to simple N-block ahead prefetch for instruction fetches
     if (instTagged && pkt->req->isInstFetch()) {
         for (int d = 1; d <= degree; d++) {
@@ -127,10 +132,12 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 	      	}
 
 	  	if (strideConf){
-			Addr new_address = data_addr + stride; 
+		   for(int deg=1 ; deg<= degree; deg++) {
+			Addr new_address = data_addr + deg * stride; 
        			addresses.push_back(new_address);
 			DPRINTF(HWPrefetch, "Stride : %d ,Miss offset %d ,Data Addr: %p ,Prefetch address: %p \n",stride,missOffset, data_addr, new_address);
         		delays.push_back(latency);
+ 		   }
 		}
 	
 		// update GHB with the latest miss addr
