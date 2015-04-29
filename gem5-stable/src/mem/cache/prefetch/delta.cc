@@ -138,7 +138,7 @@ DeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 		deg =deg+1;
 		
 		//Prefetch width
-		for (int degr =0 ; degr< degree-1; degr++){
+/*		for (int degr =0 ; degr< degree-1; degr++){
 			for(pf_width = tab.begin();pf_width != tab.end();pf_width++ ){
 				if ((*pf_width)->distance == new_dist && (*pf_width)->isSecure == is_secure)
           				  break;
@@ -149,12 +149,12 @@ DeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 					new_dist = (*pf_width)->Pre_distance.back();
 					new_addr += new_dist;
 					if ( (signed int)new_addr < 0 ){break;}
-				/*	if (pageStop && !samePage(data_addr, new_addr)) {
+					if (pageStop && !samePage(data_addr, new_addr)) {
                 				// Spanned the page, so now stop
 						
               	    		    		pfSpanPage += degree - degr + 1;
                					return;
-          				} else { */ // COMMENTED FOR DEBUG
+          				} else {  // COMMENTED FOR DEBUG
 						DPRINTF(HWPrefetch,"Prefetched addr in width D=%d and dist:%d is %x\n",degr,new_dist,new_addr);
 						addresses.push_back(new_addr);
 						delays.push_back(latency);
@@ -169,7 +169,7 @@ DeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 				break;
 			}
 
-		}
+		} */
 			
 	}
 
