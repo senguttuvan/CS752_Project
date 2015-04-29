@@ -37,12 +37,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Authors: Ron Dreslinski
+ * Authors: Navin Senguttuvan
+ *          Swetha Srinivasan
  */
 
 /**
  * @file
- * Describes a markov prefetcher.
+ * Describes a delta prefetcher.
  */
 
 #ifndef __MEM_CACHE_PREFETCH_DELTA_PREFETCHER_HH__
@@ -70,15 +71,16 @@ class DeltaPrefetcher : public BasePrefetcher
     {
       public:
         
-        Addr missAddr;
+        int distance;
         bool isSecure;
 	int confidence;
         bool tolerance;
-        std::vector <Addr> Pre_miss;
+        std::vector <int> Pre_distance;
     };
 
     std::list<DeltaEntry*> table[Max_Contexts];
     Addr Previous_missaddr;
+    int Previous_distance;
     bool instTagged;
 
   public:
@@ -86,7 +88,8 @@ class DeltaPrefetcher : public BasePrefetcher
     DeltaPrefetcher(const Params *p)
         : BasePrefetcher(p), instTagged(p->inst_tagged)
     {
-     Previous_missaddr = 0;	
+     Previous_missaddr = 0;
+     Previous_distance = 0;
     }
 
     ~DeltaPrefetcher() {}

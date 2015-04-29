@@ -43,7 +43,7 @@
 
 /**
  * @file
- * Global History Buffer based Stride Prefetcher template instantiations.
+ * Global History Buffer based Delta Prefetcher template instantiations.
  */
 
 #include "base/trace.hh"
@@ -95,7 +95,6 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
     /* Scan Table for instAddr Match */
     std::vector<IndexTableEntry*>::iterator iter;
     std::vector<TableEntry*>::iterator tabIter;
-    TableEntry* GHBpointer;
     std::vector<TableEntry*>::iterator GHB_Pre_iter;
 
     for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
@@ -123,38 +122,28 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
 
 	std::vector<TableEntry*>::iterator  tab_Pre_iter = tabIter+1;
 	// Traverse the link list to find all possible prefetch address    
-	GHBpointer = (*tabIter)->listPointer;
-	int local_delta;
-        if (*tab_Pre_iter != NULL) {
- 
-         	 DPRINTF(HWPrefetch, "TabEntry %p. Tab pre iter : %p , Tab miss addr :%p prefetch miss:%p \n",TabEntry, (*tab_Pre_iter) , TabEntry->missAddr, (*tab_Pre_iter)->missAddr );
-       
-                 //Calculate detla betn current and next value in GHB
-  	         local_delta = (*tabIter)->missAddr - (*tab_Pre_iter)->missAddr ;
 
-	         Addr new_address =  (data_addr)+ local_delta;
-                 addresses.push_back(new_address);
-           	 delays.push_back(latency);
+	int local_delta = 0;
+	for (int i = 0; i < degree - 1; i++) {
+        	if (*tab_Pre_iter != NULL) {
+
+       
+                	 //Calculate detla betn current and next value in GHB
+  		         local_delta += (*tab_Pre_iter)->missAddr - (*tabIter)->missAddr ;
+
+		         Addr new_address =  (data_addr)+ local_delta;
+
+ 
+	         	 DPRINTF(HWPrefetch, "Delta: %d, local_delta: %d current miss: %p prev_miss addr :%p prefetch address:%x \n",delta,local_delta, data_addr, (*tabIter)->missAddr, new_address );
+			addresses.push_back(new_address);
+           		 delays.push_back(latency); ///Inserttttttttttttt page span !!!! (Check double correlation)
+		} else {
+		  break;
+		}
+		tabIter = tab_Pre_iter;
+		tab_Pre_iter++;
 	}
 
-	if (GHBpointer != NULL) {
-          if ((GHBtab.back()) - GHBpointer <= GHBSIZE) 
-           {
-    	     for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
-             // Get the corresponding itertor (this is needed to get the next element in the vector)
-              if ( (*tabIter) == GHBpointer){
-		break;
-    	      }  
-           }
-
-	   GHB_Pre_iter = tabIter + 1;
-	   local_delta = GHBpointer->missAddr - (*GHB_Pre_iter)->missAddr ;
-           Addr new_address = data_addr + local_delta; 
-           DPRINTF(HWPrefetch, "GHBPointer %p. GHB pre iter : %p , GHB miss addr :%p Data add: %p ,delta : %d New miss:%p \n",GHBpointer, (*GHB_Pre_iter) , GHBpointer->missAddr, data_addr,local_delta,new_address );
-
-           addresses.push_back(new_address);
-           delays.push_back(latency);
-          } 
     	  // update GHB with the latest miss addr
           if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
           {
@@ -170,25 +159,6 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
         DPRINTF(HWPrefetch, "After addin in hit PC: %x Data Add: %p ghb size: %d \n",pc,data_addr, GHBtab.size() );              
 	// Update index table to point to the new GHB entry
 	(*iter)->historyBufferEntry = GHBtab.back();
-
-	} else {
-	 	DPRINTF(HWPrefetch, "In the else part\n");
-		if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
-      		  {
- 	    		  GHBtab.erase(GHBtab.begin());	
-      		  }
-
-                TableEntry* new_entry = new TableEntry;
-        	new_entry->missAddr = data_addr;
-        	new_entry->isSecure = is_secure;
-        	new_entry->listPointer = (*iter)->historyBufferEntry;
-
-        	GHBtab.push_back(new_entry);
-		(*iter)->historyBufferEntry = GHBtab.back();
-		DPRINTF(HWPrefetch, "Inserted value in GHb : %p\n",new_entry->missAddr);
-
-	
-	}
 
      } else {
         // Miss in table

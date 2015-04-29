@@ -43,7 +43,7 @@
 
 /**
  * @file
- * Global History Buffer based Stride Prefetcher template instantiations.
+ * Global History Buffer based Markov Prefetcher template instantiations.
  */
 
 #include "base/trace.hh"
@@ -122,11 +122,11 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 	// Traverse the link list to find all possible prefetch address    
 	for (int i=0; i<=degree; i++)
 	{	
-		 DPRINTF(HWPrefetch,"Inside outer iteration %d",i);
+		 DPRINTF(HWPrefetch,"Inside outer iteration %d ",i);
 		 tab_Pre_iter= tabIter;
         	 for(int d=0; d<= degree;d++)
 		 {	
-			DPRINTF(HWPrefetch,"Inside outer iteration %d",d);
+			DPRINTF(HWPrefetch,"Inside inner iteration %d \n",d);
 			tab_Pre_iter = tab_Pre_iter +1;
 			if (*tab_Pre_iter != NULL) {
 				
@@ -140,8 +140,9 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 					DPRINTF(HWPrefetch,"Prefetched addr in I=%d D=%d is %x\n",i,d,new_address);
 					addresses.push_back(new_address);
 					delays.push_back(latency);
-				}	
+				}	 // COMMENTED FOR DEBUGGING
 			}
+
 			else {
 			    	break;	
 			}
