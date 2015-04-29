@@ -49,8 +49,8 @@
 #include "base/trace.hh"
 #include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/ghb_stride.hh"
-#define GHBSIZE 16
-#define INDEX_TABLE_SIZE 4
+#define GHBSIZE 256
+#define INDEX_TABLE_SIZE 256
 
 void
 GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
@@ -84,7 +84,7 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
     DPRINTF(HWPrefetch,"***************GHB table*****************");
      for (ghbprint_iter = GHBtab.begin(); ghbprint_iter != GHBtab.end(); ghbprint_iter++) {
-	DPRINTF(HWPrefetch,"Entry PC and pointer %x  \t %x \n",(*ghbprint_iter)->missAddr,(*ghbprint_iter)-> listPointer);
+	DPRINTF(HWPrefetch,"Entry PC and pointer %x  %x  \t %x \n",(*ghbprint_iter),(*ghbprint_iter)->missAddr,(*ghbprint_iter)-> listPointer);
      }
  
     // Revert to simple N-block ahead prefetch for instruction fetches
@@ -135,7 +135,7 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 		int missOffset = TabEntry->missAddr - GHBpointer->missAddr;
 		DPRINTF(HWPrefetch, "Miss offset %d. TabEntry missaddr : %p , GHB miss addr :%p .Stride :%d \n",missOffset,TabEntry->missAddr , GHBpointer->missAddr,stride );
 
-		if(stride == missOffset ) {
+		if(stride == missOffset && stride != 0) {
 	     		strideConf = true;
 	      	}
 
