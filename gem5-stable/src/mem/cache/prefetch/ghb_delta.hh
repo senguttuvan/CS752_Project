@@ -56,8 +56,7 @@
 
 class GlobalDeltaPrefetcher : public GlobalHistoryBuffer
 {
-  private : Addr Previous_missaddr; 
-  public:
+   public:
 
     GlobalDeltaPrefetcher(const GlobalDeltaPrefetcherParams *p)
         : GlobalHistoryBuffer(p)
