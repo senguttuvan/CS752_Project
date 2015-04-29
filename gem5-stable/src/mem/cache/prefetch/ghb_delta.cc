@@ -50,7 +50,7 @@
 #include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/ghb_delta.hh"
 #define GHBSIZE 256
-#define INDEX_TABLE_SIZE 64
+#define INDEX_TABLE_SIZE 256 
 
 void
 GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,

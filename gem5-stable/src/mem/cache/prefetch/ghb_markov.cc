@@ -50,7 +50,7 @@
 #include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/ghb_markov.hh"
 #define GHBSIZE 256
-#define INDEX_TABLE_SIZE 64
+#define INDEX_TABLE_SIZE 64 
 
 void
 GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
@@ -126,10 +126,12 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 		 tab_Pre_iter= tabIter;
         	 for(int d=0; d<= degree;d++)
 		 {	
-			DPRINTF(HWPrefetch,"Inside inner iteration %d \n",d);
-			tab_Pre_iter = tab_Pre_iter +1;
-			if (*tab_Pre_iter != NULL) {
-				
+		    DPRINTF(HWPrefetch,"Inside inner iteration %d preiter %x ghb back %x\n",d);
+		 
+	            tab_Pre_iter = tab_Pre_iter +1;
+		    if(tab_Pre_iter != GHBtab.end()){
+			if (*tab_Pre_iter != NULL ) {
+			
 	 			DPRINTF(HWPrefetch, "TabEntry %p. Tab pre iter : %p , Tab miss addr :%p prefetch miss:%p \n",TabEntry, (*tab_Pre_iter) , TabEntry->missAddr, (*tab_Pre_iter)->missAddr );	
 				Addr new_address =  (*tab_Pre_iter)->missAddr;
 				if (pageStop && !samePage(data_addr, new_address)) {
@@ -141,17 +143,27 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 					addresses.push_back(new_address);
 					delays.push_back(latency);
 				}	 // COMMENTED FOR DEBUGGING
+				
 			}
 
 			else {
+				DPRINTF(HWPrefetch,"Inside tab pre iter null else");
 			    	break;	
 			}
-		
+		    }
+		    else {
+		 	DPRINTF(HWPrefetch,"Inside tab pre iter outside limit else");
+
+			break;
+			}	
 		 }
+		
 		 GHBpointer = (*tabIter)->listPointer;
+		if (*tabIter != NULL){
 		 if (GHBpointer != NULL) {
       		    if ((GHBtab.back()) - GHBpointer <= GHBSIZE) 
       		     {
+			   DPRINTF(HWPrefetch,"Inside finding next tabiter");
     	  		   for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
            		  // Get the corresponding itertor (this is needed to get the next element in the vector)
            		   	 if ( (*tabIter) == GHBpointer){
@@ -161,8 +173,16 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
           	     }
 		 else {
+			DPRINTF(HWPrefetch,"Inside else for ghb not null");
+
 		    break;
 		 } 
+		}
+	     }
+	     else {
+	        DPRINTF(HWPrefetch,"Inside else for ghb not null");
+
+		break;
 		}
 	}
 	// update GHB with the latest miss addr
