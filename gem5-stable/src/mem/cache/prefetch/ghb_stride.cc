@@ -72,12 +72,20 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
     DPRINTF(HWPrefetch, "PC: %x Data Add: %p ghb size: %d ,index tab size : %d ,master id %d \n",pc,data_addr, GHBtab.size(),indexTab.size(), master_id );
 
+     std::vector<IndexTableEntry*>::iterator print_iter;
 
-     //Print index table
+     //Print index table and GHB
      DPRINTF(HWPrefetch,"============Index table====================");
-     for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
-	DPRINTF(HWPrefetch,"");
+     for (print_iter = indexTab.begin(); print_iter != indexTab.end(); print_iter++) {
+	DPRINTF(HWPrefetch,"Entry PC and pointer %x  \t %x \n",(*print_iter)->key,(*print_iter)-> historyBufferEntry);
      }
+    std::vector<TableEntry*>::iterator ghbprint_iter;
+
+    DPRINTF(HWPrefetch,"***************GHB table*****************");
+     for (ghbprint_iter = GHBtab.begin(); ghbprint_iter != GHBtab.end(); ghbprint_iter++) {
+	DPRINTF(HWPrefetch,"Entry PC and pointer %x  \t %x \n",(*ghbprint_iter)->missAddr,(*ghbprint_iter)-> listPointer);
+     }
+ 
     // Revert to simple N-block ahead prefetch for instruction fetches
     if (instTagged && pkt->req->isInstFetch()) {
         for (int d = 1; d <= degree; d++) {
