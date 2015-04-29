@@ -76,7 +76,7 @@ def config_cache(options, system):
         system.l2.cpu_side = system.tol2bus.master
         system.l2.mem_side = system.membus.slave
 	system.l2.prefetch_on_access = 'true'
-	system.l2.prefetcher = GlobalStridePrefetcher(degree=4,latency=1) 
+	system.l2.prefetcher = GlobalDeltaPrefetcher(degree=4,latency=1) 
 	system.l2.prefetcher.on_read_only = 'true'
 	system.l2.prefetcher.on_prefetch = 'false'
 

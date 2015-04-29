@@ -71,6 +71,7 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     std::vector<TableEntry*> &GHBtab = table[master_id];
 
     DPRINTF(HWPrefetch, "PC: %x Data Add: %p ghb size: %d ,index tab size : %d ,master id %d \n",pc,data_addr, GHBtab.size(),indexTab.size(), master_id );
+    std::vector<IndexTableEntry*>::iterator iter;
 
 
      //Print index table
@@ -95,7 +96,6 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
     }
 
     /* Scan Table for instAddr Match */
-    std::vector<IndexTableEntry*>::iterator iter;
     TableEntry* GHBpointer;
     
 
@@ -263,6 +263,7 @@ DPRINTF(HWPrefetch, "After addin in miss PC: %x Data Add: %p ghb size: %d \n",pc
 	}
 
       } 
+      
 }
 
 
