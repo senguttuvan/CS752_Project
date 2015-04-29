@@ -90,53 +90,74 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
         return;
     }
  
-    int delta = data_addr - Previous_missaddr;
+    Addr prevMiss = 0;
+    Addr prevMiss2 = 0;
+    int delta = 0;
+    int delta2 = 0;
+    std::vector<TableEntry*>::iterator tabIter;
+
+    for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
+       // Get the corresponding itertor (this is needed to get the next element in the vector)
+       if ( (*tabIter) == GHBtab.back()){
+		break;
+       }
+    }
+
+    prevMiss = (GHBtab.size() >= 1)  ? (*tabIter)->missAddr : 0 ;
+    prevMiss2 = (GHBtab.size() >= 2) ? (*(tabIter - 1))->missAddr : 0 ;
+
+    delta = (GHBtab.size() >= 1) ? data_addr - prevMiss : 0 ;
+    delta2 =(GHBtab.size() >= 2) ? prevMiss - prevMiss2 : 0 ;
+
+    DPRINTF(HWPrefetch, "Debug:  prevMiss: %x  prevMiss2: %x delta: %d delta2: %d  \n", prevMiss, prevMiss2, delta, delta2);
 
     /* Scan Table for instAddr Match */
     std::vector<IndexTableEntry*>::iterator iter;
-    std::vector<TableEntry*>::iterator tabIter;
     std::vector<TableEntry*>::iterator GHB_Pre_iter;
 
     for (iter = indexTab.begin(); iter != indexTab.end(); iter++) {
         // Entries have to match on the security state as well
-        if ((*iter)->key == delta)
+        if (((*iter)->key == delta) && ((*iter)->key2 == delta2))
             break;
     }
 
     if (iter != indexTab.end()) {
         // Hit in table
 	DPRINTF(HWPrefetch, "Hit in the index table\n");
-
 	if ((*iter)->confidence < Max_Conf ) {
 		(*iter)->confidence++;
 	}
-	
-	TableEntry* TabEntry = (*iter)->historyBufferEntry;
 
+	TableEntry* TabEntry = (*iter)->historyBufferEntry;
 	for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
         // Get the corresponding itertor (this is needed to get the next element in the vector)
           if ( (*tabIter) == TabEntry){
 		break;
     	  }
         }
-
 	std::vector<TableEntry*>::iterator  tab_Pre_iter = tabIter+1;
 	// Traverse the link list to find all possible prefetch address    
 
 	int local_delta = 0;
 	for (int i = 0; i < degree - 1; i++) {
-        	if (*tab_Pre_iter != NULL) {
-
-       
+       	
+       		if (((*tab_Pre_iter) != NULL) && (*tabIter)!=NULL)  {
+        		DPRINTF(HWPrefetch, "Inside if");      
                 	 //Calculate detla betn current and next value in GHB
   		         local_delta += (*tab_Pre_iter)->missAddr - (*tabIter)->missAddr ;
+				DPRINTF(HWPrefetch, "Inside local delta");      
 
 		         Addr new_address =  (data_addr)+ local_delta;
+	DPRINTF(HWPrefetch, "Inside new address");      
 
- 
+ 			
+			if ((signed int)new_address > 0 ){
 	         	 DPRINTF(HWPrefetch, "Delta: %d, local_delta: %d current miss: %p prev_miss addr :%p prefetch address:%x \n",delta,local_delta, data_addr, (*tabIter)->missAddr, new_address );
 			addresses.push_back(new_address);
            		 delays.push_back(latency); ///Inserttttttttttttt page span !!!! (Check double correlation)
+			 } else {
+			   break;
+			 }
 		} else {
 		  break;
 		}
@@ -182,8 +203,9 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
         GHBtab.push_back(new_entry);
 	DPRINTF(HWPrefetch, "After addin in miss PC: %x Data Add: %p ghb size: %d \n",pc,data_addr, GHBtab.size() );
 
-	// Insert a corresponding index table entry
-	if (indexTab.size() == INDEX_TABLE_SIZE){
+	if ((prevMiss != 0) && (prevMiss2 != 0)) {
+	// Insert a corresponding index table entry if we have data for 2 misses !
+	 if (indexTab.size() == INDEX_TABLE_SIZE){
 		//Check if any of the listpointers in the Index table is invalid
 
 	      bool invalidFound = false;
@@ -206,6 +228,7 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
  			//Insert into the index table
         		IndexTableEntry *new_entry = new IndexTableEntry;
         		new_entry->key = delta;
+			new_entry->key2 = delta2;
 			new_entry->confidence = 0;
         		new_entry->historyBufferEntry = GHBtab.back() ;
         	        indexTab.push_back(new_entry);
@@ -234,6 +257,7 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
 
 			IndexTableEntry *new_entry = new IndexTableEntry;
         		new_entry->key = delta;
+			new_entry->key2 = delta2;
 			new_entry->confidence = 0;
         		new_entry->historyBufferEntry = GHBtab.back() ;
         	        indexTab.push_back(new_entry);
@@ -242,6 +266,7 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
 
 		IndexTableEntry *new_entry = new IndexTableEntry;
         	new_entry->key = delta;
+		new_entry->key2 = delta2;
 		new_entry->confidence = 0;
         	new_entry->historyBufferEntry = GHBtab.back() ;
                 indexTab.push_back(new_entry);
@@ -249,7 +274,8 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
 
 		}
 
-      } 
+      }
+     }
 }
 
 

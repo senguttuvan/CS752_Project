@@ -74,6 +74,7 @@ class GlobalHistoryBuffer : public BasePrefetcher
     {
       public:
         Addr key;
+	int key2;
         TableEntry* historyBufferEntry;
 	int confidence;
     };
