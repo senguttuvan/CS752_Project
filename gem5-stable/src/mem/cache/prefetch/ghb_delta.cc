@@ -99,15 +99,18 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
     for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
        // Get the corresponding itertor (this is needed to get the next element in the vector)
        if ( (*tabIter) == GHBtab.back()){
+
 		break;
        }
     }
 
+    if (tabIter != GHBtab.end()){
     prevMiss = (GHBtab.size() >= 1)  ? (*tabIter)->missAddr : 0 ;
     prevMiss2 = (GHBtab.size() >= 2) ? (*(tabIter - 1))->missAddr : 0 ;
 
     delta = (GHBtab.size() >= 1) ? data_addr - prevMiss : 0 ;
     delta2 =(GHBtab.size() >= 2) ? prevMiss - prevMiss2 : 0 ;
+    }
 
     DPRINTF(HWPrefetch, "Debug:  prevMiss: %x  prevMiss2: %x delta: %d delta2: %d  \n", prevMiss, prevMiss2, delta, delta2);
 
@@ -132,15 +135,25 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
 	for (tabIter = GHBtab.begin(); tabIter != GHBtab.end(); tabIter++) {
         // Get the corresponding itertor (this is needed to get the next element in the vector)
           if ( (*tabIter) == TabEntry){
+		DPRINTF(HWPrefetch, "GLOBAL : Tab Entry : %x tabIter: ", TabEntry->missAddr);
 		break;
     	  }
         }
+
+	if (tabIter != GHBtab.end()) {
 	std::vector<TableEntry*>::iterator  tab_Pre_iter = tabIter+1;
 	// Traverse the link list to find all possible prefetch address    
-
+//	DPRINTF(HWPrefetch, "GLOBAL : Tab Iter + 1:  tabIter + 1 miss Addr: %x ", (*tab_Pre_iter)->missAddr);
 	int local_delta = 0;
 	for (int i = 0; i < degree - 1; i++) {
-       	
+	   if (tab_Pre_iter != GHBtab.end()){
+	        if (GHBtab.back() - (*tab_Pre_iter) >= GHBSIZE ) // Default GHB size is set to 256
+        	{
+//	           DPRINTF(HWPrefetch,"ghbtab.back %abpre iter  %\n",GHBtab.back(),(*tab_Pre_iter));		
+	 	   break;   
+		}
+
+
        		if (((*tab_Pre_iter) != NULL) && (*tabIter)!=NULL)  {
         		DPRINTF(HWPrefetch, "Inside if");      
                 	 //Calculate detla betn current and next value in GHB
@@ -163,6 +176,10 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
 		}
 		tabIter = tab_Pre_iter;
 		tab_Pre_iter++;
+	  } else {
+	     break;
+	  }
+	 } 
 	}
 
     	  // update GHB with the latest miss addr
