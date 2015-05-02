@@ -166,9 +166,16 @@ GlobalDeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addres
  			
 			if ((signed int)new_address > 0 ){
 	         	 DPRINTF(HWPrefetch, "Delta: %d, local_delta: %d current miss: %p prev_miss addr :%p prefetch address:%x \n",delta,local_delta, data_addr, (*tabIter)->missAddr, new_address );
-			addresses.push_back(new_address);
+			 if (pageStop && !samePage(data_addr, new_addr)) {
+                		// Spanned the page, so now stop
+                		pfSpanPage += degree - d + 1;
+                		break;
+            			}
+			 else {
+ 			 addresses.push_back(new_address);
            		 delays.push_back(latency); ///Inserttttttttttttt page span !!!! (Check double correlation)
-			 } else {
+			 }
+		      } else {
 			   break;
 			 }
 		} else {

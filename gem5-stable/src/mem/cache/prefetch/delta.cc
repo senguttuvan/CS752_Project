@@ -126,15 +126,15 @@ DeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 		int new_dist = *vec_iter;
 		Addr new_addr = data_addr + new_dist ;
 		if ( (signed int)new_addr < 0 ){continue;}
-		//if (pageStop && !samePage(data_addr, new_addr)) {
+		if (pageStop && !samePage(data_addr, new_addr)) {
                 	// Spanned the page, so now stop
-              	//        pfSpanPage += degree - deg + 1;
-               	//	return;
-          	//} else {
+              	        pfSpanPage += degree - deg + 1;
+               		break;
+          	} else {
 			DPRINTF(HWPrefetch,"Prefetched addr in depth D=%d distance=%d is %x\n",deg, new_dist, new_addr);
 			addresses.push_back(new_addr);
 			delays.push_back(latency);
-		//}
+		}
 		deg =deg+1;
 		
 		//Prefetch width
@@ -153,7 +153,7 @@ DeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
                 				// Spanned the page, so now stop
 						
               	    		    		pfSpanPage += degree - degr + 1;
-               					return;
+               					break;
           				} else {  // COMMENTED FOR DEBUG
 						DPRINTF(HWPrefetch,"Prefetched addr in width D=%d and dist:%d is %x\n",degr,new_dist,new_addr);
 						addresses.push_back(new_addr);

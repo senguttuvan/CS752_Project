@@ -120,15 +120,15 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
         for(vec_iter = (*iter)->Pre_miss.begin();vec_iter !=  (*iter)->Pre_miss.end();vec_iter++)
 	{
 		Addr new_addr = *vec_iter;
-		//if (pageStop && !samePage(data_addr, new_addr)) {
+		if (pageStop && !samePage(data_addr, new_addr)) {
                 	// Spanned the page, so now stop
-              	//        pfSpanPage += degree - deg + 1;
-               	//	return;
-          	//} else {
+              	        pfSpanPage += degree - deg + 1;
+               		break;
+          	} else {
 			DPRINTF(HWPrefetch,"Prefetched addr in depth D=%d is %x\n",deg,new_addr);
 			addresses.push_back(new_addr);
 			delays.push_back(latency);
-		//}
+		}
 		deg =deg+1;
 		
 		//Prefetch width
