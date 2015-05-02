@@ -120,15 +120,15 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
         for(vec_iter = (*iter)->Pre_miss.begin();vec_iter !=  (*iter)->Pre_miss.end();vec_iter++)
 	{
 		Addr new_addr = *vec_iter;
-		//if (pageStop && !samePage(data_addr, new_addr)) {
+		if (pageStop && !samePage(data_addr, new_addr)) {
                 	// Spanned the page, so now stop
-              	//        pfSpanPage += degree - deg + 1;
-               	//	return;
-          	//} else {
+              	        pfSpanPage += degree - deg + 1;
+               		break;
+          	} else {
 			DPRINTF(HWPrefetch,"Prefetched addr in depth D=%d is %x\n",deg,new_addr);
 			addresses.push_back(new_addr);
 			delays.push_back(latency);
-		//}
+		}
 		deg =deg+1;
 		
 		//Prefetch width
@@ -140,16 +140,16 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
 			if(pf_width != tab.end()){
 				if(!(*pf_width)->Pre_miss.empty()) {
 					new_addr = (*pf_width)->Pre_miss.back();
-				/*	if (pageStop && !samePage(data_addr, new_addr)) {
+					if (pageStop && !samePage(data_addr, new_addr)) {
                 				// Spanned the page, so now stop
 						
               	    		    		pfSpanPage += degree - degr + 1;
                					return;
-          				} else { */ // COMMENTED FOR DEBUG
+          				} else {  // COMMENTED FOR DEBUG
 						DPRINTF(HWPrefetch,"Prefetched addr in width D=%d is %x\n",degr,new_addr);
 						addresses.push_back(new_addr);
 						delays.push_back(latency);
-					//}  // COMMENTED FOR DEBUG
+					}  // COMMENTED FOR DEBUG
 
 				}
 				else {

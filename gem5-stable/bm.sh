@@ -4,4 +4,3 @@ build/ARM/gem5.opt configs/example/se.py  --cmd="401.bzip2" --options="input.pro
 mkdir m5out_bzip2_markov 
 cp -r m5out/ m5out_bzip2_markov/
 
-

@@ -141,7 +141,13 @@ GlobalStridePrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
 	  	if (strideConf){
 		   for(int deg=1 ; deg<= degree; deg++) {
-			Addr new_address = data_addr + deg * stride; 
+			Addr new_address = data_addr + deg * stride;
+			
+		        if (pageStop && !samePage(data_addr, new_address)) {
+                	// Spanned the page, so now stop
+		                pfSpanPage += degree - deg + 1;
+                		return;
+            		} 
        			addresses.push_back(new_address);
 			DPRINTF(HWPrefetch, "Stride : %d ,Miss offset %d ,Data Addr: %p ,Prefetch address: %p \n",stride,missOffset, data_addr, new_address);
         		delays.push_back(latency);

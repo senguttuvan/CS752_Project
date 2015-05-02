@@ -148,7 +148,7 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 				if (pageStop && !samePage(data_addr, new_address)) {
                 			// Spanned the page, so now stop
               				  pfSpanPage += degree - d + 1;
-               				  return;
+               				  break;
           			} else {
 					DPRINTF(HWPrefetch,"Prefetched addr in I=%d D=%d is %x\n",i,d,new_address);
 					addresses.push_back(new_address);
