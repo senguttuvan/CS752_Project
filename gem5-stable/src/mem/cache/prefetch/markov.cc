@@ -77,7 +77,7 @@ MarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
     for (print_iter = tab.begin(); print_iter != tab.end(); print_iter++) {
 	DPRINTF(HWPrefetch,"\n Markov table - miss Addr %x\t",(*print_iter)->missAddr);
 	for (print_vec=(*print_iter)->Pre_miss.begin();print_vec != (*print_iter)->Pre_miss.end(); print_vec++)
-         { std::cout<<std::hex<<(*print_vec)<<"\t "; 
+         {// std::cout<<std::hex<<(*print_vec)<<"\t "; 
          }
 	}
     DPRINTF(HWPrefetch,"\n\n\nEnd of Table ::::::::::::::::::::::: \n");

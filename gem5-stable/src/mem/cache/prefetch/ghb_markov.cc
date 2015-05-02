@@ -50,7 +50,7 @@
 #include "debug/HWPrefetch.hh"
 #include "mem/cache/prefetch/ghb_markov.hh"
 #define GHBSIZE 256
-#define INDEX_TABLE_SIZE 64 
+#define INDEX_TABLE_SIZE 256 
 
 void
 GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
@@ -119,17 +119,28 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
    	}
 
 	std::vector<TableEntry*>::iterator  tab_Pre_iter;
-	// Traverse the link list to find all possible prefetch address    
+	// Traverse the link list to find all possible prefetch address 
+
+	if (tabIter != GHBtab.end()){
 	for (int i=0; i<=degree; i++)
 	{	
 		 DPRINTF(HWPrefetch,"Inside outer iteration %d ",i);
 		 tab_Pre_iter= tabIter;
         	 for(int d=0; d<= degree;d++)
 		 {	
-		    DPRINTF(HWPrefetch,"Inside inner iteration %d preiter %x ghb back %x\n",d);
+		    DPRINTF(HWPrefetch,"Inside inner iteration %d",d);
 		 
 	            tab_Pre_iter = tab_Pre_iter +1;
-		    if(tab_Pre_iter != GHBtab.end()){
+		    if(tab_Pre_iter != GHBtab.end() ){
+
+		    DPRINTF(HWPrefetch,"\n Inside tab_Pre_iter != GHBtab.end() tabIter->missAddr " );
+
+		        if (GHBtab.back() - (*tab_Pre_iter) >= GHBSIZE ) // Default GHB size is set to 256
+        		{
+//		           DPRINTF(HWPrefetch,"ghbtab.back %x tabpre iter  %x\n",GHBtab.back(),(*tab_Pre_iter));		
+		 	   break;   
+			}
+
 			if (*tab_Pre_iter != NULL ) {
 			
 	 			DPRINTF(HWPrefetch, "TabEntry %p. Tab pre iter : %p , Tab miss addr :%p prefetch miss:%p \n",TabEntry, (*tab_Pre_iter) , TabEntry->missAddr, (*tab_Pre_iter)->missAddr );	
@@ -158,8 +169,8 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 			}	
 		 }
 		
-		 GHBpointer = (*tabIter)->listPointer;
 		if (*tabIter != NULL){
+		 GHBpointer = (*tabIter)->listPointer;
 		 if (GHBpointer != NULL) {
       		    if ((GHBtab.back()) - GHBpointer <= GHBSIZE) 
       		     {
@@ -184,6 +195,7 @@ GlobalMarkovPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addre
 
 		break;
 		}
+	}
 	}
 	// update GHB with the latest miss addr
         if (GHBtab.size() >= GHBSIZE ) // Default GHB size is set to 256
