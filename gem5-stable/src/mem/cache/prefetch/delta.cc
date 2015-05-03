@@ -80,7 +80,7 @@ DeltaPrefetcher::calculatePrefetch(PacketPtr &pkt, std::list<Addr> &addresses,
     for (print_iter = tab.begin(); print_iter != tab.end(); print_iter++) {
 	DPRINTF(HWPrefetch,"\n Delta table - distance %d \t", (*print_iter)->distance);
 	for (print_vec=(*print_iter)->Pre_distance.begin();print_vec != (*print_iter)->Pre_distance.end(); print_vec++)
-         { std::cout<<(*print_vec)<<"\t"; 
+         {// std::cout<<(*print_vec)<<"\t"; 
          }
 	}
     DPRINTF(HWPrefetch,"\n\n\nEnd of Table ::::::::::::::::::::::: \n");
